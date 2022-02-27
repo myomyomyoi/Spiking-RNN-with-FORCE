@@ -8,6 +8,8 @@ https://senselab.med.yale.edu/ModelDB/showmodel.cshtml?model=190565
 
 ## Figure
 
-![fig1](./results/fig1.png)
+![fig1](./result/fig1.png)
 
-![fig2](./results/fig2.png)
+![fig2](./result/fig2.png)
+
+![data](./result/data.png)
