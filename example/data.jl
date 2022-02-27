@@ -4,9 +4,9 @@ using .Util
 using Plots
 
 mg = Util.generate_mackeyglass(1000, β=0.2, γ=0.1, τ=32, n=10, Δt=1, x0=1.2)
-ss = Util.genereate_sinusoidal(5, Δt=0.01, Hz=5)
-vdp_h_x, vdp_h_y = generate_vdp(50, Δt=0.001, μ=0.3, x0=0, y0=2)
-vdp_r_x, vdp_r_y = generate_vdp(50, Δt=0.001, μ=5, x0=0, y0=2)
+ss = Util.genereate_sinusoidal(1000, Δt=0.01, Hz=5)
+vdp_h_x, vdp_h_y = Util.generate_vdp(50, Δt=0.001, μ=0.3, x0=0, y0=2)
+vdp_r_x, vdp_r_y = Util.generate_vdp(50, Δt=0.001, μ=5, x0=0, y0=2)
 l_x, l_y, l_z = Util.generate_lorenz(50, Δt=0.001, ρ=28, σ=10, B=8/3, x0=-10, y0=-10, z0=20)
 
 p1 = plot(ss, title="Sinsoidal (5Hz)")
