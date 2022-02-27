@@ -57,16 +57,16 @@ end
     param::ModelParameter = ModelParameter()
     neuron_param::IzhikevichParam = IzhikevichParam() # param for neurons
 
-    ω_0::Matrix{Float32} = randn(rng, N, N) .* (rand(rng, N, N) .< param.p) ./ (param.p*sqrt(N)) # gaussian
-    η::Matrix{Float32} = 2 .* rand(rng, M, N) .- 1 # uniform over [-1, 1], E
+    ω_0::Matrix{Float32} = randn(MersenneTwister(seed), N, N) .* (rand(MersenneTwister(seed+1), N, N) .< param.p) ./ (param.p*sqrt(N)) # gaussian
+    η::Matrix{Float32} = 2 .* rand(MersenneTwister(seed+2), M, N) .- 1 # uniform over [-1, 1]
     ϕ::Matrix{Float32} = zeros(M, N) # W_out, BPhi
     P::Matrix{Float32} = Matrix(I * 2, N, N) # NxN
     cd::Vector{Float32} = zeros(N)
 
-    v::Vector{Float32} = rand(rng, N) .* (neuron_param.v_r + (neuron_param.v_peak - neuron_param.v_r))
+    v::Vector{Float32} = rand(MersenneTwister(seed+3), N) .* (neuron_param.v_r + (neuron_param.v_peak - neuron_param.v_r))
     u::Vector{Float32} = zeros(N)
     fired::Vector{Bool} = zeros(N)
-
+    
     I::Vector{Float32} = zeros(N)
     IPSC::Vector{Float32} = zeros(N)
     h::Vector{Float32} = zeros(N)

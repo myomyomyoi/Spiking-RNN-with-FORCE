@@ -12,7 +12,7 @@ N = 500
 M = 1
 T = length(input)
 
-model = IzhikevichRNN.Model(seed=1, N=N, M=M)
+model = IzhikevichRNN.Model(seed=10, N=N, M=M)
 
 # store array
 v = zeros(N, T)
