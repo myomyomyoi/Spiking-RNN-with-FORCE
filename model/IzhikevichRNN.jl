@@ -1,11 +1,11 @@
-module SpikingESN
+module IzhikevichRNN
 using Base:@kwdef
 using Parameters: @unpack, @pack!
 using LinearAlgebra
 using DataStructures
 using Random
 
-@kwdef struct IzhikevichParams
+@kwdef struct IzhikevichParam
     C::Float32 = 250
     b::Float32 = -2
     v_peak::Float32 = 30
@@ -18,7 +18,7 @@ using Random
     Δt::Float32 = 0.04
 end
 
-function update(v, u, params::IzhikevichParams, I)
+function update(v, u, param::IzhikevichParam, I)
     function dvdt(v, v_r, v_t, k, u, I, C)
         return (k*(v - v_r)*(v - v_t) - u + I)/C
     end
@@ -28,39 +28,42 @@ function update(v, u, params::IzhikevichParams, I)
     end
 
     _v, _u = v, u
-    v += params.Δt * dvdt(_v, params.v_r, params.v_t, params.k, _u, I, params.C)
-    u += params.Δt * dudt(_u, _v, params.v_r, params.a, params.b)
+    v += param.Δt * dvdt(_v, param.v_r, param.v_t, param.k, _u, I, param.C)
+    u += param.Δt * dudt(_u, _v, param.v_r, param.a, param.b)
 
-    fired::Bool = v >= params.v_peak
-    u = ifelse(v >= params.v_peak, u + params.d, u)
-    v = ifelse(v >= params.v_peak, params.v_reset, v)
+    fired::Bool = v >= param.v_peak
+    u = ifelse(v >= param.v_peak, u + param.d, u)
+    v = ifelse(v >= param.v_peak, param.v_reset, v)
 
     return v, u, fired
 end
 
-@kwdef mutable struct Network
-    seed::Int = 0
-    rng::MersenneTwister = MersenneTwister(seed)
-    
-    N::Int
-    M::Int
-
-    params::IzhikevichParams = IzhikevichParams() # params for neurons
+@kwdef mutable struct ModelParameter
     I_bias::Float32 = 1000
     τ_R::Float32 = 2
     τ_D::Float32 = 20
     G::Float32 = 10^4
     Q::Float32 = 10^4
     p::Float32 = 0.1
+end
 
-    Gω_0::Matrix{Float32} = G .* randn(rng, N, N) .* (rand(rng, N, N) .< p) ./ (p*sqrt(N)) # gaussian
+@kwdef mutable struct Model
+    seed::Int = 0
+    rng::MersenneTwister = MersenneTwister(seed)
+    
+    N::Int
+    M::Int
+
+    param::ModelParameter = ModelParameter()
+    neuron_param::IzhikevichParam = IzhikevichParam() # param for neurons
+
+    ω_0::Matrix{Float32} = randn(rng, N, N) .* (rand(rng, N, N) .< param.p) ./ (param.p*sqrt(N)) # gaussian
+    η::Matrix{Float32} = 2 .* rand(rng, M, N) .- 1 # uniform over [-1, 1], E
     ϕ::Matrix{Float32} = zeros(M, N) # W_out, BPhi
-    Qη::Matrix{Float32} = Q .* 2 .* (rand(rng, M, N) .- 1) # uniform over [-1, 1], E
-
     P::Matrix{Float32} = Matrix(I * 2, N, N) # NxN
     cd::Vector{Float32} = zeros(N)
 
-    v::Vector{Float32} = rand(rng, N) .* (params.v_r + (params.v_peak - params.v_r))
+    v::Vector{Float32} = rand(rng, N) .* (neuron_param.v_r + (neuron_param.v_peak - neuron_param.v_r))
     u::Vector{Float32} = zeros(N)
     fired::Vector{Bool} = zeros(N)
 
@@ -74,26 +77,27 @@ end
     error::Vector{Float32} = zeros(M)
 end
 
-function update!(model::Network, input::Vector, mode::Int)
-    @unpack N, M, I_bias, τ_R, τ_D, Gω_0, ϕ, Qη, v, u, fired, P, cd, I, IPSC, h, r, hr, JD, pred, error = model
-    @unpack Δt = model.params
+function update!(model::Model, input::Vector, mode::Int)
+    @unpack N, M, ω_0, ϕ, η, v, u, fired, P, cd, I, IPSC, h, r, hr, JD, pred, error = model
+    @unpack I_bias, G, Q, τ_R, τ_D = model.param
+    @unpack Δt = model.neuron_param
     
     I .= I_bias
     for i = 1:N
         @inbounds I[i] += IPSC[i]
 
         for j = 1:M
-            @inbounds I[i] += Qη[j, i] * pred[j] # W_fb?
+            @inbounds I[i] += Q * η[j, i] * pred[j] # W_fb?
         end
 
         # Euler integration
-        @inbounds v[i], u[i], fired[i] = update(v[i], u[i], model.params, I[i])
+        @inbounds v[i], u[i], fired[i] = update(v[i], u[i], model.neuron_param, I[i])
     end
 
     JD .= 0
     for i = 1:N
         for j = 1:N
-            @inbounds JD[i] += Gω_0[j, i] * fired[i] # W_rec
+            @inbounds JD[i] += G * ω_0[j, i] * fired[i] # W_rec
         end
     end
 

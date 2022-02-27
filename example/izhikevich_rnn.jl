@@ -1,6 +1,6 @@
 include("../model/IzhikevichRNN.jl")
 include("../util.jl")
-using .SpikingESN
+using .IzhikevichRNN
 using .Util
 
 using Plots
@@ -12,7 +12,7 @@ N = 500
 M = 1
 T = length(input)
 
-model = SpikingESN.Network(seed=1, N=N, M=M)
+model = IzhikevichRNN.Model(seed=1, N=N, M=M)
 
 # store array
 v = zeros(N, T)
@@ -22,12 +22,12 @@ fired = zeros(N, T)
 pred = zeros(M, T)
 error = zeros(M, T)
 
-w = model.Gω_0 + transpose(model.Qη)*model.ϕ
+w = model.ω_0 + transpose(model.η)*model.ϕ
 before_evs = eigvals(w)
 
 @time for i = 1:T
     mode = ifelse(10000/0.04 > i > 5000/0.04, 1, 0)
-    SpikingESN.update!(model, [input[i]], mode)
+    IzhikevichRNN.update!(model, [input[i]], mode)
 
     v[:, i] = model.v
     r[:, i] = model.r
@@ -37,7 +37,7 @@ before_evs = eigvals(w)
     error[:, i] = model.error
 end
 
-w = model.Gω_0 + transpose(model.Qη)*model.ϕ
+w = model.ω_0 + transpose(model.η)*model.ϕ
 after_evs = eigvals(w)
 
  # 0~1の範囲に変換
