@@ -1,4 +1,6 @@
-# WIP
+# README
+
+Work in Progress
 
 ## Reference
 
@@ -6,10 +8,10 @@ W. Nicola and C. Clopath, “Supervised learning in spiking neural networks with
 
 https://senselab.med.yale.edu/ModelDB/showmodel.cshtml?model=190565
 
-## Figure
+## Experiments
 
-![fig1](./result/fig1.png)
+### sin (5Hz)
 
-![fig2](./result/fig2.png)
+![fig1](./result/sin_a.png)
 
-![data](./result/data.png)
+![fig2](./result/sin_b.png)
