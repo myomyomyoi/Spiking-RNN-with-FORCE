@@ -6,7 +6,7 @@ function genereate_sinusoidal(T; Δt, Hz)
     x = zeros(step_length)
     
     for i = 1:step_length
-        x[i] = sin((i-1)*Δt*2π*Hz)
+        x[i] = sin(((i-1)*Δt*2π)/1000*Hz)
     end
 
     return x
@@ -105,7 +105,7 @@ end
 
 function generate_vdp(T; Δt, μ, x0, y0)
 
-    function rk4(x, y, μ, t)
+    function rk4(x, y, μ, Δt)
 
         function dxdt(y)
             return y
@@ -146,6 +146,21 @@ function generate_vdp(T; Δt, μ, x0, y0)
     end
 
     return x, y
+end
+
+function rate(spike_train, Δt)
+    T = length(spike_train)
+    sec_length = 1/Δt
+
+    rate = zeros(T)
+
+    for i = 1:T
+        left::Int = max(0, i - sec_length/2) |> round
+        right::Int = min(T, i + sec_length/2) |> round
+        rate[i] = reduce(+, view(spike_train, left, right))
+    end
+
+    return rate
 end
 
 end
